@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: SMS Spam Classification API
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:8000
+paths:
+  /predict:
+    post:
+      operationId: predictSms
+      summary: Operation che permette di predire in tempo reale se un messaggio ricevuto è SMS o HAM.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictRequest'
+      responses:
+        '200':
+          description: Prediction generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictResponse'
+  /health:
+    get:
+      operationId: getHealth
+      summary: Operation che permette di effettuare un healt-check sul servizio di classificazione degli SMS.
+      responses:
+        '200':
+          description: Health information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /model-metadata:
+    get:
+      operationId: getModelMetadata
+      summary: Operation che permette il recupero dei metadati del modello attualmente selezionato come più prestante.
+      responses:
+        '200':
+          description: Active model metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelMetadataResponse'
+        '404':
+          description: Model not available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    PredictRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 5000
+    PredictResponse:
+      type: object
+      required: [prediction, model_name]
+      properties:
+        prediction:
+          type: string
+          enum: [spam, ham]
+        model_name:
+          type: string
+    HealthResponse:
+      type: object
+      required: [status, model_loaded, model_version]
+      properties:
+        status:
+          type: string
+          enum: [UP, DEGRADED]
+        model_loaded:
+          type: boolean
+        model_version:
+          type: string
+          nullable: true
+    ModelMetadataResponse:
+      type: object
+      required: [model_name, model_version, trained_at, metrics, artifact_path, memoization_formula]
+      properties:
+        model_name:
+          type: string
+        model_version:
+          type: string
+        trained_at:
+          type: string
+        artifact_path:
+          type: string
+        training_dataset_hash:
+          type: string
+        feature_config:
+          type: object
+          additionalProperties: true
+        metrics:
+          type: object
+          additionalProperties: true
+        memoization_formula:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [detail, error_code]
+      properties:
+        detail:
+          type: string
+        error_code:
+          type: string
