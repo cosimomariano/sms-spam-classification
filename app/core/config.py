@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     models_dir: Path = BASE_DIR / 'artifacts' / 'models'
     metrics_dir: Path = BASE_DIR / 'artifacts' / 'metrics'
     memo_dir: Path = BASE_DIR / 'artifacts' / 'memo'
+    selected_model_manifest_path: Path = BASE_DIR / 'artifacts' / 'models' / 'selected_model.json'
 
     # Iperparametri e parametri associati alla pipeline
     batch_size: int = 500
@@ -30,5 +31,6 @@ class Settings(BaseSettings):
     parallel_workers: int = 3
 
     pipeline_version: str = '2.0.0'
+    memoization_formula: str = 'K = H(D,C,P,V[,R])'
 
 settings = Settings()
