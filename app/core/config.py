@@ -16,8 +16,11 @@ class Settings(BaseSettings):
     raw_dataset_path: Path = BASE_DIR / 'data' / 'raw' / 'sms-spam-collection.csv'
     normalized_dataset_path: Path = BASE_DIR / 'data' / 'processed' / 'dataset_normalized.csv'
 
+    memo_dir: Path = BASE_DIR / 'artifacts' / 'memo'
 
     # Iperparametri e parametri associati alla pipeline
     batch_size: int = 500
+
+    pipeline_version: str = '2.0.0'
 
 settings = Settings()
