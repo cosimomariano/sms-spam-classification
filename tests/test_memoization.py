@@ -1,7 +1,8 @@
 from ml.pipeline.memoization import MemoizationService
 
-
 def test_memoization_key_changes_when_seed_changes():
+    """ Test sul controllo di uguaglianza delle chiavi per il riutilizzo/non riutilizzo degli steps """
+    
     memo = MemoizationService()
 
     key1, _ = memo.build_key(step_name='train_rf', 

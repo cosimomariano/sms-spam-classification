@@ -8,13 +8,14 @@ from sklearn.pipeline import Pipeline
 from app.main import app
 from app.core.config import settings
 
-
 def ensure_test_model():
-    settings.ensure_directories()
+    # Funzione per l'istanziazione di model di test fittizio addestrato su un piccolo insieme di dati per gli specifici unit test
+
     model_path = settings.models_dir / 'test_model.joblib'
     pipeline = Pipeline([('tfidf', TfidfVectorizer()), ('classifier', MultinomialNB())])
     pipeline.fit(['free prize now', 'win money fast', 'hello friend', 'see you tomorrow'], ['spam', 'spam', 'ham', 'ham'])
     joblib.dump(pipeline, model_path)
+
     manifest = {
         'model_name': 'multinomial_nb',
         'model_version': 'multinomial_nb-test',
@@ -25,13 +26,13 @@ def ensure_test_model():
         'metrics': {'accuracy': 1.0, 'precision': 1.0, 'recall': 1.0, 'f1': 1.0},
         'memoization_formula': 'K = H(D,C,P,V[,R])',
     }
-    settings.selected_model_manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
 
+    settings.selected_model_manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
 
 client = TestClient(app)
 
-
 def test_health_endpoint():
+    """ Test per l'health-check del servizio """
     ensure_test_model()
     response = client.get('/health')
     assert response.status_code == 200
@@ -39,6 +40,7 @@ def test_health_endpoint():
 
 
 def test_model_metadata_endpoint():
+    """ Test per la corretta stampa dei metadati """
     ensure_test_model()
     response = client.get('/model-metadata')
     assert response.status_code == 200
@@ -46,6 +48,7 @@ def test_model_metadata_endpoint():
 
 
 def test_predict_endpoint():
+    """ Test per la corretta predizione di un SMS tramite endpoint in real time """
     ensure_test_model()
     response = client.post('/predict', json={'text': 'free prize'})
     assert response.status_code == 200
