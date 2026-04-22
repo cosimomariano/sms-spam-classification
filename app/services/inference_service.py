@@ -1,10 +1,8 @@
 from __future__ import annotations
-
 from app.generated.models import PredictResponse
 from app.services.artifacts_service import ArtifactsService
 from ml.pipeline.cleaning import TextCleaningService
 from ml.pipeline.memoization import MemoizationService
-
 
 class InferenceService:
     def __init__(self, artifacts_service: ArtifactsService, memoization: MemoizationService) -> None:

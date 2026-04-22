@@ -1,13 +1,10 @@
 from __future__ import annotations
-
-import json
 from functools import lru_cache
 from pathlib import Path
-
-import joblib
-
 from app.core.config import settings
 from app.core.exceptions import ModelNotAvailableError
+import joblib
+import json
 
 @lru_cache(maxsize=1)
 def _read_manifest_from_disk(path: Path) -> dict:
@@ -23,7 +20,6 @@ def _read_bundle_from_disk(path: Path):
             f"Retrain the pipeline or regenerate the manifest."
         )
     return joblib.load(path)
-
 
 class ArtifactsService:
     def load_manifest(self) -> dict:

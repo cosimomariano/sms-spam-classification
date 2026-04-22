@@ -1,8 +1,6 @@
 from __future__ import annotations
-
 from app.generated.models import HealthResponse, ModelMetadataResponse
 from app.services.artifacts_service import ArtifactsService
-
 
 class ModelMetadataService:
     def __init__(self, artifacts_service: ArtifactsService) -> None:

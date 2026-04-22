@@ -1,27 +1,24 @@
 # AUTO-GENERATED FROM openapi/openapi.yaml. Do not edit manually.
 from __future__ import annotations
-
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
+""""Modelli di request e response associati all'interfaccia esposta"""
 
 class PredictRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
     text: str = Field(..., min_length=1, max_length=5000)
-
 
 class PredictResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
     prediction: str
     model_name: str = Field(..., alias='model_name')
 
-
 class HealthResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
     status: str
     model_loaded: bool = Field(..., alias='model_loaded')
     model_version: str | None = Field(None, alias='model_version')
-
 
 class ModelMetadataResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
@@ -33,7 +30,6 @@ class ModelMetadataResponse(BaseModel):
     feature_config: dict[str, Any] = Field(..., alias='feature_config')
     metrics: dict[str, Any]
     memoization_formula: str = Field(..., alias='memoization_formula')
-
 
 class ErrorResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
