@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import logging
 import re
-from pathlib import Path
-
 import pandas as pd
-
+from pathlib import Path
 from app.core.config import settings
 from ml.pipeline.memoization import MemoizationService
 
@@ -14,6 +12,8 @@ URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
 NUMBER_PATTERN = re.compile(r'\b\d+\b')
 NON_ALPHA_PATTERN = re.compile(r'[^a-z\s]')
 MULTISPACE_PATTERN = re.compile(r'\s+')
+# Imposto una lista di stopwords ovvero parole che sono nella maggior parte dei casi delle congiunzioni tra frasi
+# ma che raramente portano significato utile alla classificazione dei testi
 STOPWORDS = {'a', 'an', 'the', 'is', 'are', 'to', 'of', 'and', 'or', 'in', 'on', 'at', 'for', 'with'}
 
 
@@ -23,30 +23,54 @@ class TextCleaningService:
 
     @staticmethod
     def clean_text(text: str) -> str:
+        """Funzione per la pulizia del testo che effettua trasformazioni sulla string del messaggio degli SMS"""
         text = (text or '').lower()
         text = URL_PATTERN.sub(' url ', text)
         text = NUMBER_PATTERN.sub(' number ', text)
         text = NON_ALPHA_PATTERN.sub(' ', text)
         text = MULTISPACE_PATTERN.sub(' ', text).strip()
-        return ' '.join(t for t in text.split(' ') if t and t not in STOPWORDS)
+        return ' '.join(t for t in text.split(' ') if t and t not in STOPWORDS) # Tolgo tutte le stop words non utili alla classificazione
 
     def clean_dataset(self, normalized_path: Path) -> Path:
+        # Path del file system per il salvataggio del dataset csv
         target = settings.cleaned_dataset_path
+
+        # Applicazione del memoizazion pattern e riutilizzo dello step eventuale
         data_descriptor = {'normalized_dataset_hash': self.memoization.file_sha256(normalized_path)}
-        config_descriptor = {'batch_size': settings.batch_size, 'cleaning_version': '1'}
+        config_descriptor = {'batch_size': settings.batch_size, 'cleaning_version': settings.cleaning_version}
         key, payload = self.memoization.build_key(step_name='clean_dataset', data_descriptor=data_descriptor, config_descriptor=config_descriptor, params_descriptor={})
         if self.memoization.can_reuse(key=key, expected_payload=payload, required_artifacts=[target]):
-            logger.info('Skipping cleaning due to step memorization.', extra={'event': 'memoization_skip', 'extra_fields': {'step': 'clean_dataset'}})
+            logger.info('Skipping cleaning due to step memorization.', 
+                        extra={'event': 'memoization_skip', 
+                               'extra_fields': {'step': 'clean_dataset'}})
             return target
+        
+        # Verifico se è presente un file residuo non conforme all'attuale run e lo rimuovo per evitare duplicati eventuali
         if target.exists():
             target.unlink()
+
         total_rows = 0
+
+        # Leggo il dataset normalizzato a chunk sulla base del parametro batch_size della configurazione
         for idx, chunk in enumerate(pd.read_csv(normalized_path, chunksize=settings.batch_size), start=1):
             cleaned = chunk.copy()
+            # Chiamo il metodo statico di cleaning dei testi per ogni messaggio SMS
             cleaned['clean_text'] = cleaned['message'].map(self.clean_text)
             total_rows += len(cleaned)
+
+            # Salvo il blocco pulito in append
             cleaned.to_csv(target, mode='a', index=False, header=not target.exists())
-            logger.info('Cleaned batch processed.', extra={'event': 'batch_processed', 'extra_fields': {'step': 'clean_dataset', 'batch_index': idx, 'batch_rows': len(cleaned)}})
+
+            logger.info('Cleaned batch processed.', 
+                        extra={'event': 'batch_processed', 
+                               'extra_fields': {'step': 'clean_dataset', 'batch_index': idx, 'batch_rows': len(cleaned)}})
+        
+        # Creo il file json contenente i metadati dello step in modo tale da poter eventualmente riutilizzarlo nelle prossime run
+        # con medesima chiave K
         self.memoization.persist(key=key, payload=payload)
-        logger.info('Cleaning completed.', extra={'event': 'step_completed', 'extra_fields': {'step': 'clean_dataset', 'rows': total_rows}})
+
+        logger.info('Cleaning completed.', 
+                    extra={'event': 'step_completed', 
+                           'extra_fields': {'step': 'clean_dataset', 'rows': total_rows}})
+        
         return target

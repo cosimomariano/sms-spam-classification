@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     pipeline_version: str = '2.0.0'
     memoization_formula: str = 'K = H(D,C,P,V[,R])'
     max_input_text_length: int = 5000
+    cleaning_version: str = '1'
 
     def model_post_init(self, __context: dict) -> None:
         """Eseguito in automatico da Pydantic dopo l'inizializzazione della classe."""
