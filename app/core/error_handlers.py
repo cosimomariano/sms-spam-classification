@@ -1,11 +1,8 @@
 from __future__ import annotations
-
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-
 from app.core.exceptions import ApiError
-
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)

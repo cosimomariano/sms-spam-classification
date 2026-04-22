@@ -1,10 +1,7 @@
 from __future__ import annotations
-
 from pathlib import Path
 import yaml
-
 from app.core.config import settings
-
 
 def load_contract_openapi() -> dict:
     contract_path = Path(__file__).resolve().parents[2] / 'openapi' / 'openapi.yaml'

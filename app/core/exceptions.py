@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 class ApiError(Exception):
     def __init__(self, detail: str, error_code: str, status_code: int = 400) -> None:
         super().__init__(detail)
