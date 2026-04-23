@@ -1,7 +1,7 @@
+from __future__ import annotations
 import hashlib
 import json
 
-from __future__ import annotations
 from pathlib import Path
 from typing import Any
 from app.core.config import settings
