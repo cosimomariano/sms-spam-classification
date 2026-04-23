@@ -8,39 +8,40 @@ Lo scopo del progetto è effettuara la risoluzione di un task di Natural Languag
 ## Obiettivi
 L'obiettivo principale del sistema è quello di identificare la natura di un SMS massimizzando la componente di affidabilita nelle predizioni ed ottimizzando i costi computazionali per la risoluzione del task. Ciò avviene attraverso:
 
-1. Ingestione e pulizia dei dati in streaming e batch.
+1. Ingestione e pulizia dei dati in modalità batch.
 2. Rappresentazione numerica del testo tramite tecnica TF-IDF.
-3. Caching e riuso di elaborazioni già effettuate per ottimizzare i tempi di esecuzione.
+3. Riuso di elaborazioni già effettuate per ridurre i tempi di esecuzione e le riesecuzioni ridondanti.
 
-Il sistema restituisce una predizione in tempo reale esponendo le proprie funzionalità e i metadati dell'addestramento attraverso un'API REST (FastAPI).
+Il sistema restituisce una predizione in tempo reale esponendo anche i metadati associati al modello selezionato attraverso un'API REST (FastAPI).
 
 ## Pipeline del sistema
 La pipeline del sistema è la seguente ed è strutturata come **Grafo Diretto Aciclico (DAG)**:
 
- - **Ingestione (Batching)**: lettura del dataset a blocchi (chunk, fissati tramite file di conigurazione) ed uniformazione e normalizzazione delle colonne.
+ - **Ingestione (Batching)**: lettura del dataset a blocchi (chunk, definiti tramite file di configurazione), validazione, uniformazione e normalizzazione delle colonne.
  - **Preprocessing**: applicazione di regole di normalizzazione e preprocessing per la rimozione di url, normalizzazione di numeri, eliminazione di caratteri speciali ed uniformazione degli spazi.
- - **Estrazione Feature e Vettorizzazione**: utilizzo della TF-IDF per la conversione del testo in una matrice sparsa ad alta dimensionalità incapsulata nella pipe di classificazione.
- - **Training Parallelo (Fan-out)**: diramazione del workflow per l'addestramento asincrono e concorrente dei tre modelli candidati previsti da progetto: Random Forest, SVM, Naive Bayes.
+ - **Estrazione Feature e Vettorizzazione**: utilizzo della TF-IDF per la conversione del testo in una rappresentazione numerica sparsa ad alta dimensionalità incapsulata nella pipeline di classificazione.
+ - **Training Parallelo (Fan-out)**: diramazione del workflow per l'addestramento concorrente e concorrente dei tre modelli candidati previsti da progetto: Random Forest, SVM, Naive Bayes.
  - **Model Selection (Fan-in)**: aggregazione delle metriche raccolte (F1-Score, Accuracy, ecc..) di tutti i modelli valutati e selezione del migliore.
  - **Deployment (Model Serving)**: esportazione dell'artefatto ottimale e generazione di un manifesto JSON per l'innesco automatico del microservizio di inferenza (model serving del modello migliore).
 
 ## Scelte progettuali principali
- 1) Per gestire l'elaborazione Out-of-Core su dataset di grandi dimensioni è stato implementato il Batching Pattern sia in fase di ingestion che di cleaning.
- 2) Per gestire i casi in cui uno step sia stato già elaborato è stato implementato lo Step Memorization Pattern formalizzato con la formula K = H(D,C,P,V[,R]) per il caching persistente, garantendo un'invalidazione coerente degli artefatti in caso di modifiche al codice.
- 3) Per garantire un disaccopiamento tra documentazioione e codice è stato utilizzato come metodo di scrittura dell'architettura il Contract-First, nello specifico l'API è stata prima definita rigorosamente in openapi/openapi.yaml, per poi autogenerare i modelli di validazione e così via.
- 4) Per accelerare le fasi computazionali particolarmente onerose è stato sfruttato il multithreading per parallelizzare alcune operazioni.
- 5) Per gestire il determinismo operativo sono stati bloccati i seed in tutte le operazioni stocastiche.
+ 1) Per gestire l'elaborazione out-of-core su dataset di grandi dimensioni è stato implementato il Batching Pattern nella fase di ingestion.
+ 2) Per gestire i casi in cui uno step sia già stato elaborato è stato implementato lo Step Memorization Pattern, formalizzato con la formula K = H(D,C,P,V[,R]), così da garantire il riuso corretto degli artefatti e un'invalidazione coerente in caso di modifiche a input, configurazione o versione della pipeline.
+ 3) Per garantire un disaccoppiamento tra documentazione e codice è stato adottato un approccio Contract-First: l'API è stata definita rigorosamente nel file openapi/openapi.yaml, per poi derivare da tale specifica i modelli di validazione e i relativi componenti applicativi.
+ 4) Per accelerare le fasi computazionali più onerose è stata introdotta l'esecuzione concorrente dei modelli candidati durante la fase di training.
+ 5) Per gestire il determinismo operativo sono stati fissati i seed in tutte le operazioni stocastiche.
+ 6) Per ottimizzare il servizio di inferenza è stato introdotto caching in-memory lato serving per il riuso del modello e del manifest già caricati.
 
 ## Argomenti del corso trattati
 Il progetto copre direttamente i seguenti argomenti teorici trattati nel corso:
 
- - Workflow pattern (DAG, step sequenziali sincroni).
+ - Workflow pattern (DAG e orchestrazione degli step).
  - Data Ingestion e Batching Pattern.
  - Caching Pattern.
  - Fan-out pattern per la parallelizzazione del training.
  - Fan-in pattern per l'aggregazione delle metriche.
  - Step Memorization Pattern basato su hashing strutturale.
- - Model Serving Pattern e containerizzazione isolata.
+ - Model Serving Pattern e containerizzazione del servizio.
 
 ## Struttura del progetto
 Il progetto ha la seguente struttura modulare:
@@ -80,7 +81,7 @@ Per eseguire il progetto, sono necessari:
     `docker compose up --build`
 
 ## Output del sistema
-Il sistema genera file binari dei modelli .joblib e un file manifest strutturato "selected_model.json".
+Il sistema genera artefatti binari dei modelli .joblib e un file manifest strutturato "selected_model.json".
 A livello di servizio, l'applicazione espone endpoint REST documentati (Swagger UI accessibile a /docs):
 
 Qui di seguito riporto gli endpoint esposti:
@@ -90,12 +91,12 @@ Qui di seguito riporto gli endpoint esposti:
 Endpoints:
     **POST /predict**: Riceve un testo e restituisce la classificazione e il nome del modello responsabile della predizione.
     **GET /health**: Verifica la salute del servizio e lo stato del caricamento in memoria del modello (Caching in-memory).
-    **GET /model-metadata**: Espone i dettagli di addestramento (hash del dataset, metriche di performance, timestamp) del modello correntemente servito.
+    **GET /model-metadata**: Espone i dettagli di addestramento del modello correntemente servito, inclusi hash del dataset, metriche di performance e timestamp.
 
 Inoltre, il sistema produce un logging strutturato in formato JSON, ideale per l'ingestione in sistemi di monitoraggio cloud(Kibana, Elastic, ecc..).
 
 ## Testing
-Sono presenti unit test eseguiti tramite il framework pytest per gli step della pipeline.
+Sono presenti test automatici eseguiti tramite il framework pytest per gli step principali della pipeline e per il comportamento del servizio.
 
 ## Note sul codice
 Il codice è rigorosamente strutturato in servizi rispettando il pattern di **Single Responsibility**.
