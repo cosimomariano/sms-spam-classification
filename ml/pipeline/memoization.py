@@ -7,7 +7,7 @@ from typing import Any
 from app.core.config import settings
 
 class MemoizationService:
-    """Formula utilizzata per lo step memorization -> K = H(D,C,P,V[,R])."""
+    """Formula utilizzata per lo step memoization -> K = H(D,C,P,V[,R])."""
 
     @staticmethod
     def file_sha256(path: Path) -> str:

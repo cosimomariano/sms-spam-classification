@@ -30,7 +30,7 @@ class BatchIngestionService:
         
         # Controllo se posso riutilizzare uno step gia effettuato e ritornare il dataset gia normalizzato in precedenza
         if self.memoization.can_reuse(key=key, expected_payload=payload, required_artifacts=[target]):
-            logger.info('Skipping normalization due to step memorization.', 
+            logger.info('Skipping normalization due to step memoization.', 
                         extra={'event': 'memoization_skip', 'extra_fields': {'step': 'normalize_dataset'}})
             return target
         

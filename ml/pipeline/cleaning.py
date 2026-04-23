@@ -40,7 +40,7 @@ class TextCleaningService:
         config_descriptor = {'batch_size': settings.batch_size, 'cleaning_version': settings.cleaning_version}
         key, payload = self.memoization.build_key(step_name='clean_dataset', data_descriptor=data_descriptor, config_descriptor=config_descriptor, params_descriptor={})
         if self.memoization.can_reuse(key=key, expected_payload=payload, required_artifacts=[target]):
-            logger.info('Skipping cleaning due to step memorization.', 
+            logger.info('Skipping cleaning due to step memoization.', 
                         extra={'event': 'memoization_skip', 
                                'extra_fields': {'step': 'clean_dataset'}})
             return target

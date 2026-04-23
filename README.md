@@ -26,7 +26,7 @@ La pipeline del sistema è la seguente ed è strutturata come **Grafo Diretto Ac
 
 ## Scelte progettuali principali
  1) Per gestire l'elaborazione out-of-core su dataset di grandi dimensioni è stato implementato il Batching Pattern nella fase di ingestion.
- 2) Per gestire i casi in cui uno step sia già stato elaborato è stato implementato lo Step Memorization Pattern, formalizzato con la formula K = H(D,C,P,V[,R]), così da garantire il riuso corretto degli artefatti e un'invalidazione coerente in caso di modifiche a input, configurazione o versione della pipeline.
+ 2) Per gestire i casi in cui uno step sia già stato elaborato è stato implementato lo Step Memoization Pattern, formalizzato con la formula K = H(D,C,P,V[,R]), così da garantire il riuso corretto degli artefatti e un'invalidazione coerente in caso di modifiche a input, configurazione o versione della pipeline.
  3) Per garantire un disaccoppiamento tra documentazione e codice è stato adottato un approccio Contract-First: l'API è stata definita rigorosamente nel file openapi/openapi.yaml, per poi derivare da tale specifica i modelli di validazione e i relativi componenti applicativi.
  4) Per accelerare le fasi computazionali più onerose è stata introdotta l'esecuzione concorrente dei modelli candidati durante la fase di training.
  5) Per gestire il determinismo operativo sono stati fissati i seed in tutte le operazioni stocastiche.
@@ -40,7 +40,7 @@ Il progetto copre direttamente i seguenti argomenti teorici trattati nel corso:
  - Caching Pattern.
  - Fan-out pattern per la parallelizzazione del training.
  - Fan-in pattern per l'aggregazione delle metriche.
- - Step Memorization Pattern basato su hashing strutturale.
+ - Step Memoization Pattern basato su hashing strutturale.
  - Model Serving Pattern e containerizzazione del servizio.
 
 ## Struttura del progetto

@@ -60,7 +60,7 @@ class TrainingService:
         # Controllo se ci sono esecuzioni passate che posso riutilizzare
         if self.memoization.can_reuse(key=key, expected_payload=payload, required_artifacts=[model_path, metrics_path]):
             metrics = json.loads(metrics_path.read_text(encoding='utf-8'))
-            logger.info('Skipping model training due to step memorization.', 
+            logger.info('Skipping model training due to step memoization.', 
                         extra={'event': 'memoization_skip', 
                                'extra_fields': {'step': f'train_{model_name}'}})
             
