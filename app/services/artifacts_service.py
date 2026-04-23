@@ -28,7 +28,7 @@ class ArtifactsService:
     def load_bundle(self):
         # Chiamiamo l'artefatto 'bundle' perché contiene sia il modello che il vectorizer
         manifest = self.load_manifest()
-        bundle_path = Path(manifest["artifact_path"]).resolve()
+        bundle_path = settings.artifacts_dir / Path(manifest["artifact_path"])
         return _read_bundle_from_disk(bundle_path)
 
     def clear_cache(self) -> None:
